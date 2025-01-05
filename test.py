@@ -101,6 +101,7 @@ def home():
     return render_template('index.html')  # This is your HTML file
 
 @app.route('/calculate', methods=['POST'])
+@app.route('/calculate', methods=['POST'])
 def calculate_route():
     # Retrieve form data from the HTML form
     origin_place = request.form['origin_place']
@@ -160,16 +161,19 @@ def calculate_route():
         "dest_place": dest_place
     }
 
-    # Only return origin and destination in the result, along with other details
+    # Return origin and destination coordinates, along with other details
     return jsonify({
         "route_distance_km": result["route_distance_km"],
         "route_duration_min": result["route_duration_min"],
         "emissions_kg": result["emissions_kg"],
         "traffic_data": result["traffic_data"],
         "weather_data": result["weather_data"],
+        "origin_coords": result["origin_coords"],
+        "dest_coords": result["dest_coords"],
         "origin_place": result["origin_place"],
         "dest_place": result["dest_place"]
     })
+
 
 if __name__ == "__main__":
     app.run(debug=True)

@@ -16,7 +16,6 @@
       color: white;
     }
 
-    /* Position the FedEx logo at the extreme left */
     .fedex-logo {
       position: absolute;
       top: 20px;
@@ -31,7 +30,7 @@
       padding: 30px;
       background-color: rgba(0, 0, 0, 0.7);
       border-radius: 10px;
-      margin-top: 100px; /* Adjust the top margin for better placement */
+      margin-top: 100px;
     }
 
     h1 {
@@ -49,7 +48,7 @@
     }
 
     button {
-      background-color: #ff6600; /* FedEx orange */
+      background-color: #ff6600;
       color: white;
       font-weight: bold;
       transition: background-color 0.3s ease;
@@ -87,6 +86,7 @@
 
     .summary-card {
       margin-top: 30px;
+      display: none; /* Hide initially */
     }
 
     .loading-spinner {
@@ -101,7 +101,6 @@
   </style>
 </head>
 <body>
-  <!-- FedEx logo on the extreme left -->
   <img src="https://fedex-dims.brightspotgocdn.com/dims4/default/028d5fc/2147483647/strip/true/crop/394x222+29+0/resize/1000x563!/format/webp/quality/90/?url=https%3A%2F%2Ffedex-static.brightspotgocdn.com%2F5e%2Faa%2F0ff0da024d44ad0370d5c9a32d87%2Ffedex-logo.png" alt="FedEx Logo" class="fedex-logo">
 
   <div class="container">
@@ -117,7 +116,6 @@
       <select id="vehicle_type" name="vehicle_type" required>
         <option value="Passenger Car">Passenger Car</option>
         <option value="Heavy-duty Truck">Heavy-duty Truck</option>
-        <!-- Add other vehicle types if necessary -->
       </select>
       
       <label for="fuel_type">Fuel Type</label>
@@ -130,105 +128,96 @@
       <label for="model_year">Vehicle Model Year</label>
       <input type="number" id="model_year" name="model_year" required>
       
-      <label for="show_emissions">Show Emissions Data</label><br>
-      <input type="checkbox" id="show_emissions" name="show_emissions" checked>
-
       <button type="submit">Calculate Route</button>
     </form>
 
-    <div class="loading-spinner">
-      <img src="https://i.gifer.com/4V0d.gif" alt="Loading...">
+    <div id="map"></div>
+
+    <div id="loading" class="loading-spinner">
+      <img src="https://i.gifer.com/7uYl.gif" alt="Loading...">
     </div>
 
-    <div id="results"></div>
-    <div id="weather" class="weather-icon"></div>
-    <div id="map"></div>
+    <div class="summary-card" id="summaryCard">
+      <h3>Route Summary</h3>
+      <table id="summaryTable">
+        <tr>
+          <th>Route Distance (km)</th>
+          <td id="routeDistance"></td>
+        </tr>
+        <tr>
+          <th>Route Duration (minutes)</th>
+          <td id="routeDuration"></td>
+        </tr>
+        <tr>
+          <th>CO₂ Emissions (kg)</th>
+          <td id="co2Emissions"></td>
+        </tr>
+        <tr>
+          <th>Traffic Data</th>
+          <td id="trafficData"></td>
+        </tr>
+        <tr>
+          <th>Weather Conditions</th>
+          <td id="weatherConditions"></td>
+        </tr>
+        <tr>
+          <th>Air Quality Index (AQI)</th>
+          <td id="aqiData"></td>
+        </tr>
+      </table>
+    </div>
   </div>
 
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
-    $('#routeForm').on('submit', function(event) {
-      event.preventDefault();
-      $('.loading-spinner').hide();
-      $('.loading-spinner').show();
-      $.ajax({
-        type: 'POST',
-        url: '/calculate',
-        data: $(this).serialize(),
-        success: function(response) {
-          $('.loading-spinner').hide();
-          displayResults(response);
-        },
-        error: function() {
-          alert('An error occurred while processing your request.');
-          $('.loading-spinner').hide();
-        }
+    const form = document.getElementById('routeForm');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const originPlace = document.getElementById('origin_place').value;
+      const destPlace = document.getElementById('dest_place').value;
+
+      document.getElementById('loading').style.display = 'block';
+
+      const response = await fetch('/calculate', {
+        method: 'POST',
+        body: new URLSearchParams(new FormData(form)),
       });
-    });
 
-    function displayResults(data) {
-      console.log(data);
-      const resultsDiv = $('#results');
-      resultsDiv.empty();
+      const result = await response.json();
+      document.getElementById('loading').style.display = 'none';
 
-      if (data.error) {
-        resultsDiv.append('<p>Error: ' + data.error + '</p>');
-        return;
-      }
+      if (result.origin_coords && result.dest_coords) {
+        // Display results in the table
+        document.getElementById('routeDistance').innerText = result.route_distance_km;
+        document.getElementById('routeDuration').innerText = result.route_duration_min;
+        document.getElementById('co2Emissions').innerText = result.emissions_kg;
+        document.getElementById('trafficData').innerText = JSON.stringify(result.traffic_data);
+        document.getElementById('aqiData').innerText = result.weather_data.aqi; // AQI from the API
 
-      const emissions = data.emissions_kg;
-      const distance = data.route_distance_km;
-      const duration = data.route_duration_min;
-      const weather = data.weather_data;
+        // Display weather conditions nicely
+        const weatherConditions = `
+        <strong>Temperature:</strong> ${result.weather_data.temperature}°C <br>
+        <strong>Condition:</strong> ${result.weather_data.condition} <br>
+        <strong>Humidity:</strong> ${result.weather_data.humidity}%`;
 
-      // Conditionally display emissions data based on checkbox
-      const showEmissions = $('#show_emissions').is(':checked');
+        document.getElementById('weatherConditions').innerHTML = weatherConditions;
 
-      resultsDiv.append(`
-        <h3>Route Information</h3>
-        <p>Distance: ${distance} km</p>
-        <p>Duration: ${duration} minutes</p>
-        ${showEmissions ? `<p>Emissions: ${emissions} kg CO₂</p>` : ''}
-        
-        <h4>Weather Info at Origin</h4>
-        <p>Temperature: ${weather.temperature}&deg;C</p>
-        <p>Condition: ${weather.condition}</p>
-        <p>Humidity: ${weather.humidity}%</p>
-        <p>AQI: ${weather.aqi}</p>
-      `);
+        // Show the summary card (table)
+        document.getElementById('summaryCard').style.display = 'block';
 
-      const weatherIcon = $('#weather');
-      if (weather.condition.toLowerCase() === 'cloudy') {
-        weatherIcon.html('<img src="cloudy.gif" alt="Cloudy Weather">');
-      } else if (weather.condition.toLowerCase() === 'rainy') {
-        weatherIcon.html('<img src="rainy.gif" alt="Rainy Weather">');
+        // Initialize the map
+        const map = L.map('map').setView([result.origin_coords[0], result.origin_coords[1]], 13);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+        // Add markers for the origin and destination
+        L.marker([result.origin_coords[0], result.origin_coords[1]]).addTo(map).bindPopup('Origin: ' + result.origin_place).openPopup();
+        L.marker([result.dest_coords[0], result.dest_coords[1]]).addTo(map).bindPopup('Destination: ' + result.dest_place).openPopup();
       } else {
-        weatherIcon.html('');
+        alert("Error: Missing route coordinates. Please check the server response.");
       }
-
-      const firstPoint = data.traffic_data.routes[0].legs[0].points[0];
-      const lastPoint = data.traffic_data.routes[0].legs[0].points[data.traffic_data.routes[0].legs[0].points.length - 1];
-
-      const origin_coords = [firstPoint.latitude, firstPoint.longitude];
-      const dest_coords = [lastPoint.latitude, lastPoint.longitude];
-
-      const map = L.map('map').setView(origin_coords, 10);
-
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-      }).addTo(map);
-
-      L.marker(origin_coords).addTo(map)
-        .bindPopup('<b>Origin: ' + data.origin_place + '</b>')
-        .openPopup();
-
-      L.marker(dest_coords).addTo(map)
-        .bindPopup('<b>Destination: ' + data.dest_place + '</b>');
-
-      const routeCoordinates = data.traffic_data.routes[0].legs[0].points.map(point => [point.latitude, point.longitude]);
-      L.polyline(routeCoordinates, {color: 'blue'}).addTo(map);
-    }
+    });
   </script>
 </body>
 </html>
