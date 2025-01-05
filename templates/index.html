@@ -214,6 +214,16 @@
         // Add markers for the origin and destination
         L.marker([result.origin_coords[0], result.origin_coords[1]]).addTo(map).bindPopup('Origin: ' + result.origin_place).openPopup();
         L.marker([result.dest_coords[0], result.dest_coords[1]]).addTo(map).bindPopup('Destination: ' + result.dest_place).openPopup();
+
+        // Draw the route on the map
+        const routeCoordinates = result.route_data; // Assuming you get this from the API
+        const latlngs = routeCoordinates.map(coord => [coord[0], coord[1]]); // Convert to lat/lng
+
+        // Add polyline to the map
+        L.polyline(latlngs, { color: 'blue' }).addTo(map);
+
+        // Optionally, adjust map bounds to fit the route
+        map.fitBounds(latlngs);
       } else {
         alert("Error: Missing route coordinates. Please check the server response.");
       }
