@@ -101,7 +101,6 @@ def home():
     return render_template('index.html')  # This is your HTML file
 
 @app.route('/calculate', methods=['POST'])
-@app.route('/calculate', methods=['POST'])
 def calculate_route():
     # Retrieve form data from the HTML form
     origin_place = request.form['origin_place']
