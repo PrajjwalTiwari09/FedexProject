@@ -152,10 +152,10 @@
           <th>CO₂ Emissions (kg)</th>
           <td id="co2Emissions"></td>
         </tr>
-        <tr>
+        <!-- <tr>
           <th>Traffic Data</th>
           <td id="trafficData"></td>
-        </tr>
+        </tr> -->
         <tr>
           <th>Weather Conditions</th>
           <td id="weatherConditions"></td>
@@ -192,7 +192,7 @@
         document.getElementById('routeDistance').innerText = result.route_distance_km;
         document.getElementById('routeDuration').innerText = result.route_duration_min;
         document.getElementById('co2Emissions').innerText = result.emissions_kg;
-        document.getElementById('trafficData').innerText = JSON.stringify(result.traffic_data);
+        // document.getElementById('trafficData').innerText = JSON.stringify(result.traffic_data);
         document.getElementById('aqiData').innerText = result.weather_data.aqi; // AQI from the API
 
         // Display weather conditions nicely

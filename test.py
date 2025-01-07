@@ -62,16 +62,16 @@ def calculate_emission_rate(vehicle_type, fuel_type, model_year, current_year):
 
     # Default emission factors (g CO₂ per kilometer)
     if vehicle_type == "Passenger Car":
-        if fuel_type == "Gasoline":
-            emission_rate = 130  # average for gasoline cars
+        if fuel_type == "Petrol":
+            emission_rate = 130  # average for Petrol cars
         elif fuel_type == "Diesel":
             emission_rate = 160  # average for diesel cars
         elif fuel_type == "Electric":
             emission_rate = 0  # no emissions for electric vehicles
 
     elif vehicle_type == "Heavy-duty Truck":
-        if fuel_type == "Gasoline":
-            emission_rate = 320  # average for gasoline trucks
+        if fuel_type == "Petrol":
+            emission_rate = 320  # average for etrol trucks
         elif fuel_type == "Diesel":
             emission_rate = 380  # average for diesel trucks
 
